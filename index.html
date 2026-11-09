@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conversor Universal - converta arquivos grátis e sem upload</title>
+<meta name="description" content="Converta imagens (PNG, JPG, WebP) e mexa em PDFs (juntar, dividir, converter) direto no navegador. Grátis, sem cadastro e 100% privado: seu arquivo nunca sai do seu dispositivo.">
+<style>
+  /* ====== CORES E BASE ====== */
+  :root {
+    --bg: #f5f6fb;
+    --card: #ffffff;
+    --texto: #1d2033;
+    --suave: #6b7088;
+    --borda: #dfe2ef;
+    --cor: #5b5ef4;
+    --cor-escura: #4548d6;
+    --ok: #16a37f;
+    --erro: #d6455d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12131c; --card: #1c1e2c; --texto: #eceefb;
+      --suave: #9da1bd; --borda: #2d3045;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { text-align: center; padding: 24px 0 8px; }
+  header h1 { margin: 0 0 8px; font-size: 1.9rem; }
+  header p { margin: 0; color: var(--suave); }
+  .selo {
+    display: inline-block; margin-top: 12px; padding: 4px 12px;
+    border-radius: 999px; background: rgba(22,163,127,.12);
+    color: var(--ok); font-size: .85rem; font-weight: 600;
+  }
+
+  /* ====== ABAS (categorias) ====== */
+  .abas { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0 16px; }
+  .aba {
+    padding: 8px 16px; border: 1px solid var(--borda); border-radius: 999px;
+    background: var(--card); color: var(--texto); font-size: .95rem; cursor: pointer;
+  }
+  .aba.ativa { background: var(--cor); border-color: var(--cor); color: #fff; }
+  .aba.em-breve { opacity: .55; cursor: not-allowed; }
+  .aba small { font-size: .7rem; margin-left: 4px; }
+
+  /* ====== PASSOS ====== */
+  .passo {
+    background: var(--card); border: 1px solid var(--borda);
+    border-radius: 16px; padding: 20px; margin-bottom: 16px;
+  }
+  .passo h2 { margin: 0 0 14px; font-size: 1.05rem; display: flex; align-items: center; gap: 10px; }
+  .num {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--cor);
+    color: #fff; display: inline-flex; align-items: center; justify-content: center;
+    font-size: .85rem;
+  }
+
+  /* Área de arrastar */
+  .drop {
+    border: 2px dashed var(--borda); border-radius: 14px; padding: 36px 16px;
+    text-align: center; cursor: pointer; transition: .15s;
+  }
+  .drop:hover, .drop.sobre { border-color: var(--cor); background: rgba(91,94,244,.07); }
+  .drop strong { display: block; font-size: 1.05rem; margin-bottom: 4px; }
+  .drop span { color: var(--suave); font-size: .9rem; }
+
+  /* Lista de arquivos escolhidos */
+  .lista { list-style: none; margin: 14px 0 0; padding: 0; }
+  .lista li {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid var(--borda); font-size: .92rem;
+  }
+  .lista li:last-child { border-bottom: 0; }
+  .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tam { color: var(--suave); white-space: nowrap; font-size: .85rem; }
+  .remover {
+    border: 0; background: none; color: var(--erro); cursor: pointer;
+    font-size: 1.1rem; padding: 0 4px;
+  }
+
+  /* Botões de formato */
+  .formatos { display: flex; gap: 10px; flex-wrap: wrap; }
+  .formato {
+    flex: 1; min-width: 90px; padding: 12px; border: 2px solid var(--borda);
+    border-radius: 12px; background: var(--card); color: var(--texto);
+    font-weight: 700; font-size: 1rem; cursor: pointer;
+  }
+  .formato small { display: block; font-weight: 400; color: var(--suave); font-size: .75rem; }
+  .formato.ativo { border-color: var(--cor); background: rgba(91,94,244,.1); }
+
+  .opcoes { display: grid; gap: 14px; margin-top: 18px; }
+  .opcoes label { font-size: .9rem; color: var(--suave); display: block; margin-bottom: 4px; }
+  .opcoes input[type=range] { width: 100%; accent-color: var(--cor); }
+  .opcoes input[type=number] {
+    width: 140px; padding: 8px; border-radius: 8px; border: 1px solid var(--borda);
+    background: var(--bg); color: var(--texto); font-size: 1rem;
+  }
+
+  /* Botões de ação */
+  .btn {
+    display: inline-block; padding: 12px 22px; border: 0; border-radius: 12px;
+    background: var(--cor); color: #fff; font-size: 1rem; font-weight: 700;
+    cursor: pointer; text-decoration: none;
+  }
+  .btn:hover { background: var(--cor-escura); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.sec { background: transparent; color: var(--cor); border: 2px solid var(--cor); }
+  .btn.peq { padding: 6px 14px; font-size: .88rem; border-radius: 8px; }
+
+  /* Resultados */
+  .res {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--borda); flex-wrap: wrap;
+  }
+  .res:last-child { border-bottom: 0; }
+  .res .info { min-width: 0; flex: 1; }
+  .res .info div { font-size: .8rem; color: var(--suave); }
+  .res .erro { color: var(--erro); font-size: .85rem; }
+  .aviso {
+    margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+    background: rgba(214,69,93,.1); color: var(--erro); font-size: .88rem;
+  }
+  .oculto { display: none !important; }
+
+  select, .opcoes input[type=text] {
+    padding: 8px; border-radius: 8px; border: 1px solid var(--borda);
+    background: var(--bg); color: var(--texto); font-size: 1rem; max-width: 100%;
+  }
+  .opcoes input[type=text] { width: 100%; }
+  .setas { border: 0; background: none; color: var(--cor); cursor: pointer; font-size: 1rem; padding: 0 4px; }
+  .setas:disabled { opacity: .3; cursor: default; }
+  .res .nome { display: block; }
+
+  .rotulo-grupo { font-size: .85rem; color: var(--suave); margin: 0 0 6px; }
+  .rotulo-grupo:not(:first-child) { margin-top: 14px; }
+
+  /* Como funciona */
+  .info-site { margin-top: 32px; color: var(--suave); font-size: .92rem; }
+  .info-site h3 { color: var(--texto); }
+  footer { text-align: center; margin-top: 40px; color: var(--suave); font-size: .82rem; }
+</style>
+</head>
+<body>
+<main>
+
+  <header>
+    <h1>Conversor Universal</h1>
+    <p>Converta seus arquivos em 3 passos. Sem cadastro, sem complicação.</p>
+    <span class="selo"> 100% privado: seu arquivo nunca sai do seu dispositivo</span>
+  </header>
+
+  <nav class="abas">
+    <button class="aba ativa" data-aba="imagens">Imagens</button>
+    <button class="aba" data-aba="pdf">PDF</button>
+    <button class="aba" data-aba="av">Áudio e vídeo</button>
+    <button class="aba" data-aba="doc">Documentos</button>
+  </nav>
+
+  <div id="painel-imagens">
+
+  <!-- PASSO 1 -->
+  <section class="passo">
+    <h2><span class="num">1</span> Escolha suas imagens</h2>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Escolher arquivos">
+      <strong>Arraste as imagens aqui ou clique para escolher</strong>
+      <span>PNG, JPG, WebP, GIF, BMP, SVG, AVIF · pode escolher várias de uma vez</span>
+    </div>
+    <input type="file" id="entrada" accept="image/*" multiple hidden>
+    <ul class="lista" id="lista"></ul>
+  </section>
+
+  <!-- PASSO 2 -->
+  <section class="passo">
+    <h2><span class="num">2</span> Converter para</h2>
+    <div class="formatos" id="formatos">
+      <button class="formato ativo" data-tipo="image/png" data-ext="png">PNG<small>sem perda, aceita fundo transparente</small></button>
+      <button class="formato" data-tipo="image/jpeg" data-ext="jpg">JPG<small>menor, ótimo para fotos</small></button>
+      <button class="formato" data-tipo="image/webp" data-ext="webp">WebP<small>moderno e bem leve</small></button>
+    </div>
+
+    <div class="opcoes">
+      <div id="blocoQualidade" class="oculto">
+        <label for="qualidade">Qualidade: <strong id="valorQualidade">90</strong>%</label>
+        <input type="range" id="qualidade" min="10" max="100" value="90">
+      </div>
+      <div>
+        <label for="largura">Largura máxima em pixels (opcional, deixe vazio para manter o tamanho)</label>
+        <input type="number" id="largura" min="16" max="10000" placeholder="ex.: 1280">
+      </div>
+    </div>
+  </section>
+
+  <!-- PASSO 3 -->
+  <section class="passo">
+    <h2><span class="num">3</span> Converter e baixar</h2>
+    <button class="btn" id="converter" disabled>Converter</button>
+    <div id="resultados"></div>
+    <button class="btn sec peq oculto" id="baixarTodos" style="margin-top:14px">⬇ Baixar todos</button>
+  </section>
+
+  </div><!-- fim do painel de imagens -->
+
+  <!-- ================= PAINEL: PDF ================= -->
+  <div id="painel-pdf" class="oculto">
+
+    <section class="passo">
+      <h2><span class="num">1</span> O que você quer fazer?</h2>
+      <div class="formatos" id="modosPdf">
+        <button class="formato ativo" data-modo="img2pdf">Imagens → PDF<small>transforme fotos em um PDF</small></button>
+        <button class="formato" data-modo="juntar">Juntar PDFs<small>una vários em um só</small></button>
+        <button class="formato" data-modo="dividir">Dividir PDF<small>separe ou extraia páginas</small></button>
+        <button class="formato" data-modo="pdf2img">PDF → Imagens<small>cada página vira uma imagem</small></button>
+      </div>
+    </section>
+
+    <section class="passo">
+      <h2><span class="num">2</span> <span id="rotuloPdf">Escolha as imagens</span></h2>
+      <div class="drop" id="dropPdf" tabindex="0" role="button" aria-label="Escolher arquivos">
+        <strong>Arraste aqui ou clique para escolher</strong>
+        <span id="dicaPdf"></span>
+      </div>
+      <input type="file" id="entradaPdf" hidden multiple accept="image/*">
+      <ul class="lista" id="listaPdf"></ul>
+
+      <div class="opcoes">
+        <div id="op-img2pdf">
+          <label for="tamanhoPagina">Tamanho da página</label>
+          <select id="tamanhoPagina">
+            <option value="a4">A4 (a imagem é ajustada à folha)</option>
+            <option value="imagem">Do tamanho da imagem</option>
+          </select>
+        </div>
+        <div id="op-dividir" class="oculto">
+          <label for="intervalo">Quais páginas? Ex.: 1-3, 5, 7-9 (deixe vazio para separar todas as páginas)</label>
+          <input type="text" id="intervalo" placeholder="ex.: 1-3, 5">
+        </div>
+        <div id="op-pdf2img" class="oculto">
+          <label for="formatoPdfImg">Formato da imagem</label>
+          <select id="formatoPdfImg">
+            <option value="image/png">PNG (melhor qualidade)</option>
+            <option value="image/jpeg">JPG (arquivo menor)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="passo">
+      <h2><span class="num">3</span> Gerar e baixar</h2>
+      <button class="btn" id="executarPdf" disabled>Criar PDF</button>
+      <div id="avisoPdf" class="aviso oculto"></div>
+      <div id="resultadosPdf"></div>
+      <button class="btn sec peq oculto" id="baixarTodosPdf" style="margin-top:14px">⬇ Baixar todos</button>
+    </section>
+
+  </div><!-- fim do painel de PDF -->
+
+  <!-- ================= PAINEL: ÁUDIO E VÍDEO ================= -->
+  <div id="painel-av" class="oculto">
+
+    <section class="passo">
+      <h2><span class="num">1</span> Escolha seus arquivos</h2>
+      <div class="drop" id="dropAv" tabindex="0" role="button" aria-label="Escolher arquivos">
+        <strong>Arraste áudios ou vídeos aqui, ou clique para escolher</strong>
+        <span>MP3, WAV, OGG, M4A, FLAC, MP4, MOV, MKV, WebM, AVI... · até 500 MB cada</span>
+      </div>
+      <input type="file" id="entradaAv" hidden multiple accept="audio/*,video/*,.mkv,.flac,.opus,.wma,.avi,.flv">
+      <ul class="lista" id="listaAv"></ul>
+    </section>
+
+    <section class="passo">
+      <h2><span class="num">2</span> Converter para</h2>
+      <div id="formatosAv">
+        <p class="rotulo-grupo">Áudio (também serve para tirar o som de um vídeo)</p>
+        <div class="formatos">
+          <button class="formato ativo" data-fmt="mp3">MP3<small>toca em qualquer lugar</small></button>
+          <button class="formato" data-fmt="wav">WAV<small>sem compressão</small></button>
+          <button class="formato" data-fmt="ogg">OGG<small>livre e leve</small></button>
+          <button class="formato" data-fmt="m4a">M4A<small>bom para iPhone</small></button>
+        </div>
+        <p class="rotulo-grupo">Vídeo</p>
+        <div class="formatos">
+          <button class="formato" data-fmt="mp4">MP4<small>o mais compatível</small></button>
+          <button class="formato" data-fmt="webm">WebM<small>bom para sites</small></button>
+          <button class="formato" data-fmt="gif">GIF<small>animação curta</small></button>
+        </div>
+      </div>
+
+      <div class="opcoes">
+        <div id="op-av-audio">
+          <label for="qualAudioAv">Qualidade do áudio</label>
+          <select id="qualAudioAv">
+            <option value="192">Alta (192 kbps)</option>
+            <option value="128" selected>Média (128 kbps)</option>
+            <option value="96">Leve (96 kbps)</option>
+          </select>
+        </div>
+        <div id="op-av-video" class="oculto">
+          <label for="qualVideoAv">Qualidade do vídeo</label>
+          <select id="qualVideoAv">
+            <option value="boa">Boa (arquivo maior)</option>
+            <option value="media" selected>Média</option>
+            <option value="leve">Leve (arquivo menor)</option>
+          </select>
+          <label for="resolucaoAv" style="margin-top:10px">Tamanho do vídeo</label>
+          <select id="resolucaoAv">
+            <option value="original">Original</option>
+            <option value="720">Até 720p</option>
+            <option value="480">Até 480p</option>
+          </select>
+        </div>
+        <p id="dicaAv" class="tam oculto"></p>
+      </div>
+    </section>
+
+    <section class="passo">
+      <h2><span class="num">3</span> Converter e baixar</h2>
+      <p class="tam" style="margin-top:0">Na primeira conversão o site baixa o motor de conversão (~31 MB); depois ele costuma ficar guardado no navegador. Vídeos podem demorar, porque a conversão acontece no seu aparelho.</p>
+      <button class="btn" id="converterAv" disabled>Converter</button>
+      <p id="statusAv" class="tam oculto"></p>
+      <div id="resultadosAv"></div>
+      <button class="btn sec peq oculto" id="baixarTodosAv" style="margin-top:14px">⬇ Baixar todos</button>
+    </section>
+
+  </div><!-- fim do painel de áudio e vídeo -->
+
+  <!-- ================= PAINEL: DOCUMENTOS ================= -->
+  <div id="painel-doc" class="oculto">
+
+    <section class="passo">
+      <h2><span class="num">1</span> Escolha seus documentos</h2>
+      <div class="drop" id="dropDoc" tabindex="0" role="button" aria-label="Escolher arquivos">
+        <strong>Arraste documentos aqui ou clique para escolher</strong>
+        <span>Word (.docx), texto (.txt), Markdown (.md) e HTML · pode escolher vários</span>
+      </div>
+      <input type="file" id="entradaDoc" hidden multiple accept=".docx,.doc,.txt,.md,.markdown,.html,.htm,text/plain,text/html">
+      <div id="avisoDoc" class="aviso oculto"></div>
+      <ul class="lista" id="listaDoc"></ul>
+    </section>
+
+    <section class="passo">
+      <h2><span class="num">2</span> Converter para</h2>
+      <div class="formatos" id="formatosDoc">
+        <button class="formato ativo" data-fmt="docx">Word<small>.docx</small></button>
+        <button class="formato" data-fmt="txt">Texto<small>.txt, sem formatação</small></button>
+        <button class="formato" data-fmt="md">Markdown<small>.md, para blogs e GitHub</small></button>
+        <button class="formato" data-fmt="html">HTML<small>.html, para páginas web</small></button>
+      </div>
+      <p class="tam" style="margin-bottom:0">Títulos, listas, tabelas, negrito e itálico são mantidos. Ao gerar Word, texto ou Markdown, imagens, cores e fontes não são levadas.</p>
+    </section>
+
+    <section class="passo">
+      <h2><span class="num">3</span> Converter e baixar</h2>
+      <button class="btn" id="converterDoc" disabled>Converter</button>
+      <div id="resultadosDoc"></div>
+      <button class="btn sec peq oculto" id="baixarTodosDoc" style="margin-top:14px">⬇ Baixar todos</button>
+    </section>
+
+  </div><!-- fim do painel de documentos -->
+
+  <section class="info-site">
+    <h3>Como funciona?</h3>
+    <p>A conversão acontece dentro do seu navegador, usando a própria tecnologia dele. Por isso é rápida, funciona sem enviar nada para a internet e não tem limite de uso.</p>
+    <h3>Dicas</h3>
+    <p><strong>JPG</strong> não aceita transparência: partes transparentes ficam com fundo branco.
+       <strong>PNG</strong> é melhor para logos e prints; <strong>JPG</strong> e <strong>WebP</strong> para fotos.</p>
+  </section>
+
+  <footer>Conversor Universal · feito com ♥ · todos os direitos reservados</footer>
+</main>
+
+<script>
+/* =========================================================
+   CONVERSOR DE IMAGENS – roda 100% no navegador
+   Ideia: carregar a imagem -> desenhar num <canvas> -> exportar
+   o canvas no formato desejado com canvas.toBlob().
+   ========================================================= */
+
+// ---- Estado do app ----
+let arquivos = [];                 // arquivos escolhidos pelo usuário
+let formato = { tipo: 'image/png', ext: 'png' };
+let resultados = [];               // { url, nomeSaida } para o "baixar todos"
+
+// ---- Atalhos para elementos da página ----
+const $ = (id) => document.getElementById(id);
+const drop = $('drop'), entrada = $('entrada'), lista = $('lista');
+const btnConverter = $('converter'), divResultados = $('resultados');
+const btnTodos = $('baixarTodos');
+
+// ---- Funções utilitárias ----
+function formatarTamanho(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+}
+function semExtensao(nome) {
+  const i = nome.lastIndexOf('.');
+  return i > 0 ? nome.slice(0, i) : nome;
+}
+function textoSeguro(texto) {           // evita que nomes de arquivo virem HTML
+  const d = document.createElement('div');
+  d.textContent = texto;
+  return d.innerHTML.replace(/"/g, '&quot;');
+}
+
+// ---- PASSO 1: escolher arquivos ----
+drop.addEventListener('click', () => entrada.click());
+drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') entrada.click(); });
+entrada.addEventListener('change', () => { adicionar(entrada.files); entrada.value = ''; });
+
+['dragenter', 'dragover'].forEach(ev =>
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('sobre'); }));
+['dragleave', 'drop'].forEach(ev =>
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('sobre'); }));
+drop.addEventListener('drop', (e) => adicionar(e.dataTransfer.files));
+
+function adicionar(novos) {
+  for (const f of novos) {
+    if (f.type.startsWith('image/')) arquivos.push(f);
+  }
+  desenharLista();
+}
+
+function desenharLista() {
+  lista.innerHTML = '';
+  arquivos.forEach((f, i) => {
+    const li = document.createElement('li');
+    li.innerHTML =
+      '<span class="nome">' + textoSeguro(f.name) + '</span>' +
+      '<span class="tam">' + formatarTamanho(f.size) +
+      ' <button class="remover" title="Remover" data-i="' + i + '">✕</button></span>';
+    lista.appendChild(li);
+  });
+  btnConverter.disabled = arquivos.length === 0;
+}
+lista.addEventListener('click', (e) => {
+  if (e.target.dataset.i !== undefined) {
+    arquivos.splice(Number(e.target.dataset.i), 1);
+    desenharLista();
+  }
+});
+
+// ---- PASSO 2: formato e opções ----
+$('formatos').addEventListener('click', (e) => {
+  const btn = e.target.closest('.formato');
+  if (!btn) return;
+  document.querySelectorAll('.formato').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  formato = { tipo: btn.dataset.tipo, ext: btn.dataset.ext };
+  // PNG não usa qualidade, então escondemos o controle
+  $('blocoQualidade').classList.toggle('oculto', formato.tipo === 'image/png');
+});
+$('qualidade').addEventListener('input', (e) => { $('valorQualidade').textContent = e.target.value; });
+
+// ---- Converte UMA imagem e devolve um Blob ----
+function carregarImagem(arquivo) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(arquivo);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Não consegui abrir esta imagem.')); };
+    img.src = url;
+  });
+}
+
+async function converterImagem(arquivo) {
+  const img = await carregarImagem(arquivo);
+
+  // SVG pode não informar tamanho; usamos um padrão nesses casos
+  let w = img.naturalWidth || 1024;
+  let h = img.naturalHeight || 1024;
+
+  // Redimensiona se o usuário pediu uma largura máxima
+  const maxW = parseInt($('largura').value, 10);
+  if (maxW && w > maxW) {
+    h = Math.round(h * (maxW / w));
+    w = maxW;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  // JPG não tem transparência: pintamos o fundo de branco antes
+  if (formato.tipo === 'image/jpeg') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+  }
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const qualidade = Number($('qualidade').value) / 100;
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, formato.tipo, qualidade));
+  if (!blob) throw new Error('Falha ao converter.');
+
+  // Alguns navegadores (ex.: Safari) não criam WebP e devolvem PNG
+  if (blob.type !== formato.tipo) {
+    throw new Error('Seu navegador não suporta exportar para ' + formato.ext.toUpperCase() + '. Tente PNG ou JPG.');
+  }
+  return blob;
+}
+
+// ---- PASSO 3: converter tudo e mostrar os downloads ----
+btnConverter.addEventListener('click', async () => {
+  btnConverter.disabled = true;
+  btnConverter.textContent = 'Convertendo...';
+  divResultados.innerHTML = '';
+  resultados.forEach(r => URL.revokeObjectURL(r.url));
+  resultados = [];
+
+  for (const arquivo of arquivos) {
+    const linha = document.createElement('div');
+    linha.className = 'res';
+    try {
+      const blob = await converterImagem(arquivo);
+      const url = URL.createObjectURL(blob);
+      const nomeSaida = semExtensao(arquivo.name) + '.' + formato.ext;
+      resultados.push({ url, nomeSaida });
+
+      const dif = Math.round((1 - blob.size / arquivo.size) * 100);
+      const nota = dif > 0 ? ' (' + dif + '% menor)' : '';
+      linha.innerHTML =
+        '<div class="info"><span class="nome">' + textoSeguro(nomeSaida) + '</span>' +
+        '<div>' + formatarTamanho(arquivo.size) + ' → ' + formatarTamanho(blob.size) + nota + '</div></div>' +
+        '<a class="btn peq" href="' + url + '" download="' + textoSeguro(nomeSaida) + '">⬇ Baixar</a>';
+    } catch (erro) {
+      linha.innerHTML =
+        '<div class="info"><span class="nome">' + textoSeguro(arquivo.name) + '</span>' +
+        '<div class="erro">' + textoSeguro(erro.message) + '</div></div>';
+    }
+    divResultados.appendChild(linha);
+  }
+
+  btnTodos.classList.toggle('oculto', resultados.length < 2);
+  btnConverter.textContent = 'Converter';
+  btnConverter.disabled = false;
+});
+
+// Baixar todos: dispara um download por arquivo
+btnTodos.addEventListener('click', () => {
+  resultados.forEach((r, i) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = r.url; a.download = r.nomeSaida;
+      document.body.appendChild(a); a.click(); a.remove();
+    }, i * 300);   // pequeno intervalo para o navegador não bloquear
+  });
+});
+</script>
+
+<script>
+/* =========================================================
+   ABAS + FERRAMENTAS DE PDF
+   As bibliotecas (pdf-lib e pdf.js) só são baixadas quando a
+   pessoa realmente usa uma ferramenta de PDF. Assim o site abre
+   rápido e a aba de imagens continua funcionando offline.
+   ========================================================= */
+
+// ---- Trocar de aba ----
+document.querySelectorAll('.aba[data-aba]').forEach((botao) => {
+  botao.addEventListener('click', () => {
+    document.querySelectorAll('.aba[data-aba]').forEach(b => b.classList.toggle('ativa', b === botao));
+    ['imagens', 'pdf', 'av', 'doc'].forEach((nome) =>
+      $('painel-' + nome).classList.toggle('oculto', botao.dataset.aba !== nome));
+  });
+});
+
+// ---- Carregar bibliotecas sob demanda ----
+const LIB = {
+  pdfLib: 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js',
+  pdfJs: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  pdfJsWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+};
+const scriptsCarregados = {};
+function carregarScript(src) {
+  if (!scriptsCarregados[src]) {
+    scriptsCarregados[src] = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => {
+        delete scriptsCarregados[src];   // permite tentar de novo depois
+        reject(new Error('Não consegui carregar uma biblioteca. Verifique sua internet e tente de novo.'));
+      };
+      document.head.appendChild(s);
+    });
+  }
+  return scriptsCarregados[src];
+}
+async function garantirPdfLib() { await carregarScript(LIB.pdfLib); }
+async function garantirPdfJs() {
+  await carregarScript(LIB.pdfJs);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = LIB.pdfJsWorker;
+}
+
+// ---- Os 4 modos e o que muda em cada um ----
+function ehPdf(f) { return f.type === 'application/pdf' || /\.pdf$/i.test(f.name); }
+const MODOS = {
+  img2pdf: { rotulo: 'Escolha as imagens', dica: 'Use as setas ↑ ↓ para mudar a ordem das páginas',
+             aceita: 'image/*', multiplo: true, ordenar: true, botao: 'Criar PDF',
+             valido: (f) => f.type.startsWith('image/') },
+  juntar:  { rotulo: 'Escolha os PDFs', dica: 'Escolha 2 ou mais · use as setas ↑ ↓ para mudar a ordem',
+             aceita: 'application/pdf,.pdf', multiplo: true, ordenar: true, botao: 'Juntar PDFs',
+             valido: ehPdf },
+  dividir: { rotulo: 'Escolha o PDF', dica: 'Um PDF por vez',
+             aceita: 'application/pdf,.pdf', multiplo: false, ordenar: false, botao: 'Dividir PDF',
+             valido: ehPdf },
+  pdf2img: { rotulo: 'Escolha o PDF', dica: 'Um PDF por vez · cada página vira uma imagem',
+             aceita: 'application/pdf,.pdf', multiplo: false, ordenar: false, botao: 'Converter em imagens',
+             valido: ehPdf }
+};
+
+let modoPdf = 'img2pdf';
+let arqPdf = [];     // arquivos escolhidos
+let resPdf = [];     // resultados { url, nome }
+
+function trocarModo(modo) {
+  modoPdf = modo;
+  const m = MODOS[modo];
+  document.querySelectorAll('#modosPdf .formato').forEach(b => b.classList.toggle('ativo', b.dataset.modo === modo));
+  $('rotuloPdf').textContent = m.rotulo;
+  $('dicaPdf').textContent = m.dica;
+  $('entradaPdf').accept = m.aceita;
+  $('entradaPdf').multiple = m.multiplo;
+  $('executarPdf').textContent = m.botao;
+  $('op-img2pdf').classList.toggle('oculto', modo !== 'img2pdf');
+  $('op-dividir').classList.toggle('oculto', modo !== 'dividir');
+  $('op-pdf2img').classList.toggle('oculto', modo !== 'pdf2img');
+  arqPdf = [];
+  limparResultadosPdf();
+  desenharListaPdf();
+}
+$('modosPdf').addEventListener('click', (e) => {
+  const btn = e.target.closest('.formato');
+  if (btn) trocarModo(btn.dataset.modo);
+});
+
+// ---- Escolher arquivos (clicar ou arrastar) ----
+const dropPdf = $('dropPdf'), entradaPdf = $('entradaPdf');
+dropPdf.addEventListener('click', () => entradaPdf.click());
+dropPdf.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') entradaPdf.click(); });
+entradaPdf.addEventListener('change', () => { adicionarPdf(entradaPdf.files); entradaPdf.value = ''; });
+['dragenter', 'dragover'].forEach(ev =>
+  dropPdf.addEventListener(ev, (e) => { e.preventDefault(); dropPdf.classList.add('sobre'); }));
+['dragleave', 'drop'].forEach(ev =>
+  dropPdf.addEventListener(ev, (e) => { e.preventDefault(); dropPdf.classList.remove('sobre'); }));
+dropPdf.addEventListener('drop', (e) => adicionarPdf(e.dataTransfer.files));
+
+function adicionarPdf(novos) {
+  const m = MODOS[modoPdf];
+  const validos = Array.from(novos).filter(m.valido);
+  if (!validos.length) return;
+  if (m.multiplo) arqPdf.push(...validos);
+  else arqPdf = [validos[0]];
+  limparResultadosPdf();
+  desenharListaPdf();
+}
+
+// ---- Lista de arquivos (com setas para reordenar) ----
+function criarBotao(texto, titulo, classe, aoClicar, desativado) {
+  const b = document.createElement('button');
+  b.textContent = texto; b.title = titulo; b.className = classe;
+  b.disabled = !!desativado;
+  b.addEventListener('click', aoClicar);
+  return b;
+}
+function mover(i, direcao) {
+  const j = i + direcao;
+  [arqPdf[i], arqPdf[j]] = [arqPdf[j], arqPdf[i]];
+  desenharListaPdf();
+}
+function desenharListaPdf() {
+  const ul = $('listaPdf');
+  ul.innerHTML = '';
+  const m = MODOS[modoPdf];
+  arqPdf.forEach((f, i) => {
+    const li = document.createElement('li');
+    const nome = document.createElement('span');
+    nome.className = 'nome';
+    nome.textContent = (m.ordenar ? (i + 1) + '. ' : '') + f.name;
+    const direita = document.createElement('span');
+    direita.className = 'tam';
+    direita.append(formatarTamanho(f.size) + ' ');
+    if (m.ordenar) {
+      direita.append(
+        criarBotao('↑', 'Subir', 'setas', () => mover(i, -1), i === 0),
+        criarBotao('↓', 'Descer', 'setas', () => mover(i, 1), i === arqPdf.length - 1)
+      );
+    }
+    direita.append(criarBotao('✕', 'Remover', 'remover', () => { arqPdf.splice(i, 1); desenharListaPdf(); }));
+    li.append(nome, direita);
+    ul.appendChild(li);
+  });
+  atualizarBotaoPdf();
+}
+function atualizarBotaoPdf() {
+  const minimo = modoPdf === 'juntar' ? 2 : 1;
+  $('executarPdf').disabled = arqPdf.length < minimo;
+}
+
+// ---- Resultados ----
+function limparResultadosPdf() {
+  resPdf.forEach(r => URL.revokeObjectURL(r.url));
+  resPdf = [];
+  $('resultadosPdf').innerHTML = '';
+  $('avisoPdf').classList.add('oculto');
+  $('baixarTodosPdf').classList.add('oculto');
+}
+function mostrarAvisoPdf(texto) {
+  const aviso = $('avisoPdf');
+  aviso.textContent = texto;
+  aviso.classList.remove('oculto');
+}
+function mostrarResultadoPdf(blob, nome) {
+  const url = URL.createObjectURL(blob);
+  resPdf.push({ url, nome });
+  const linha = document.createElement('div');
+  linha.className = 'res';
+  const info = document.createElement('div');
+  info.className = 'info';
+  const n = document.createElement('span');
+  n.className = 'nome';
+  n.textContent = nome;
+  const t = document.createElement('div');
+  t.textContent = formatarTamanho(blob.size);
+  info.append(n, t);
+  const a = document.createElement('a');
+  a.className = 'btn peq'; a.href = url; a.download = nome; a.textContent = '⬇ Baixar';
+  linha.append(info, a);
+  $('resultadosPdf').appendChild(linha);
+  $('baixarTodosPdf').classList.toggle('oculto', resPdf.length < 2);
+}
+$('baixarTodosPdf').addEventListener('click', () => {
+  resPdf.forEach((r, i) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = r.url; a.download = r.nome;
+      document.body.appendChild(a); a.click(); a.remove();
+    }, i * 300);
+  });
+});
+
+// ---- Utilidades ----
+function paraBlob(canvas, tipo, qualidade) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Falha ao gerar a imagem.')), tipo, qualidade);
+  });
+}
+function traduzirErro(e) {
+  const msg = (e && e.message) ? e.message : String(e);
+  if (/encrypt|password/i.test(msg)) return 'Este PDF está protegido por senha. Remova a senha e tente de novo.';
+  if (/no pdf header|invalid pdf|failed to parse|corrupt/i.test(msg)) return 'Não consegui ler este PDF. Ele pode estar corrompido.';
+  return msg;
+}
+
+// >>> inicio-interpretar-paginas
+// Transforma "1-3, 5, 7-9" em [0,1,2,4,6,7,8] (posições começando em 0)
+function interpretarPaginas(texto, total) {
+  const paginas = [];
+  for (const parte of texto.split(',')) {
+    const p = parte.trim();
+    if (!p) continue;
+    const m = p.match(/^(\d+)\s*(?:-\s*(\d+))?$/);
+    if (!m) throw new Error('Não entendi "' + p + '". Use o formato 1-3, 5, 7-9.');
+    const ini = parseInt(m[1], 10);
+    const fim = m[2] ? parseInt(m[2], 10) : ini;
+    if (ini < 1 || fim > total || ini > fim) {
+      throw new Error('A página "' + p + '" não existe. Este PDF tem ' + total + ' página(s).');
+    }
+    for (let n = ini; n <= fim; n++) paginas.push(n - 1);
+  }
+  return paginas;
+}
+// <<< fim-interpretar-paginas
+
+// ---- Ferramenta 1: imagens -> PDF ----
+async function imagensParaPdf(arquivos, saida) {
+  await garantirPdfLib();
+  const { PDFDocument } = PDFLib;
+  const doc = await PDFDocument.create();
+  const A4 = [595.28, 841.89];
+  const usarA4 = $('tamanhoPagina').value === 'a4';
+
+  for (const f of arquivos) {
+    const img = await carregarImagem(f);
+    const w = img.naturalWidth || 1024, h = img.naturalHeight || 1024;
+    // Passamos por um canvas e exportamos como JPG: assim funciona
+    // com qualquer formato que o navegador abra (PNG, WebP, GIF, SVG...)
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    const blob = await paraBlob(canvas, 'image/jpeg', 0.92);
+    const emb = await doc.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+
+    if (usarA4) {
+      const pagina = doc.addPage(A4);
+      const margem = 24;
+      const esc = Math.min((A4[0] - 2 * margem) / w, (A4[1] - 2 * margem) / h);
+      const dw = w * esc, dh = h * esc;
+      pagina.drawImage(emb, { x: (A4[0] - dw) / 2, y: (A4[1] - dh) / 2, width: dw, height: dh });
+    } else {
+      const pagina = doc.addPage([w, h]);
+      pagina.drawImage(emb, { x: 0, y: 0, width: w, height: h });
+    }
+  }
+  const bytes = await doc.save();
+  const nome = arquivos.length === 1 ? semExtensao(arquivos[0].name) + '.pdf' : 'imagens.pdf';
+  saida(new Blob([bytes], { type: 'application/pdf' }), nome);
+}
+
+// ---- Ferramenta 2: juntar PDFs ----
+async function juntarPdfs(arquivos, saida) {
+  await garantirPdfLib();
+  const { PDFDocument } = PDFLib;
+  const final = await PDFDocument.create();
+  for (const f of arquivos) {
+    const origem = await PDFDocument.load(await f.arrayBuffer());
+    const paginas = await final.copyPages(origem, origem.getPageIndices());
+    paginas.forEach(p => final.addPage(p));
+  }
+  const bytes = await final.save();
+  saida(new Blob([bytes], { type: 'application/pdf' }), 'pdfs-juntados.pdf');
+}
+
+// ---- Ferramenta 3: dividir PDF ----
+async function dividirPdf(arquivo, saida) {
+  await garantirPdfLib();
+  const { PDFDocument } = PDFLib;
+  const origem = await PDFDocument.load(await arquivo.arrayBuffer());
+  const total = origem.getPageCount();
+  const base = semExtensao(arquivo.name);
+  const escolhidas = interpretarPaginas($('intervalo').value, total);
+  // Se a pessoa escolheu páginas: um PDF só com elas. Se deixou vazio: um PDF por página.
+  const grupos = escolhidas.length
+    ? [escolhidas]
+    : Array.from({ length: total }, (_, i) => [i]);
+
+  for (let g = 0; g < grupos.length; g++) {
+    const novo = await PDFDocument.create();
+    const copiadas = await novo.copyPages(origem, grupos[g]);
+    copiadas.forEach(p => novo.addPage(p));
+    const bytes = await novo.save();
+    const nome = escolhidas.length ? base + '-paginas-selecionadas.pdf' : base + '-pagina-' + (g + 1) + '.pdf';
+    saida(new Blob([bytes], { type: 'application/pdf' }), nome);
+  }
+}
+
+// ---- Ferramenta 4: PDF -> imagens ----
+async function pdfParaImagens(arquivo, saida) {
+  await garantirPdfJs();
+  const dados = new Uint8Array(await arquivo.arrayBuffer());
+  const pdf = await pdfjsLib.getDocument({ data: dados }).promise;
+  const tipo = $('formatoPdfImg').value;
+  const ext = tipo === 'image/png' ? 'png' : 'jpg';
+  const base = semExtensao(arquivo.name);
+
+  for (let n = 1; n <= pdf.numPages; n++) {
+    $('executarPdf').textContent = 'Página ' + n + ' de ' + pdf.numPages + '...';
+    const pagina = await pdf.getPage(n);
+    const v1 = pagina.getViewport({ scale: 1 });
+    // Escala 2 deixa nítido; o limite evita travar celulares com páginas gigantes
+    const escala = Math.min(2, 4096 / Math.max(v1.width, v1.height));
+    const vp = pagina.getViewport({ scale: escala });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.floor(vp.width);
+    canvas.height = Math.floor(vp.height);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await pagina.render({ canvasContext: ctx, viewport: vp }).promise;
+    const blob = await paraBlob(canvas, tipo, 0.92);
+    saida(blob, base + '-pagina-' + n + '.' + ext);
+    pagina.cleanup();
+  }
+}
+
+// ---- Botão principal ----
+$('executarPdf').addEventListener('click', async () => {
+  const btn = $('executarPdf');
+  btn.disabled = true;
+  btn.textContent = 'Processando...';
+  limparResultadosPdf();
+  try {
+    if (modoPdf === 'img2pdf') await imagensParaPdf(arqPdf, mostrarResultadoPdf);
+    else if (modoPdf === 'juntar') await juntarPdfs(arqPdf, mostrarResultadoPdf);
+    else if (modoPdf === 'dividir') await dividirPdf(arqPdf[0], mostrarResultadoPdf);
+    else await pdfParaImagens(arqPdf[0], mostrarResultadoPdf);
+  } catch (erro) {
+    mostrarAvisoPdf(traduzirErro(erro));
+  }
+  btn.textContent = MODOS[modoPdf].botao;
+  atualizarBotaoPdf();
+});
+
+trocarModo('img2pdf');
+</script>
+
+<script>
+/* =========================================================
+   ÁUDIO E VÍDEO (o ffmpeg roda dentro do navegador, via WebAssembly)
+   O "motor" tem ~31 MB, então só é baixado na primeira conversão.
+   Usamos a versão que roda SEM precisar de configuração especial
+   no servidor (a chamada "single-thread").
+   ========================================================= */
+const FF = {
+  ffmpegJs: 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/umd/ffmpeg.js',
+  worker:   'https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/umd/814.ffmpeg.js',
+  coreJs:   'https://unpkg.com/@ffmpeg/core@0.12.3/dist/umd/ffmpeg-core.js',
+  coreWasm: 'https://unpkg.com/@ffmpeg/core@0.12.3/dist/umd/ffmpeg-core.wasm'
+};
+
+// Baixa um arquivo e devolve um endereço "blob:" do próprio site.
+// Isso contorna a regra do navegador que não deixa criar um Worker
+// a partir de outro domínio. "remendo" permite ajustar o texto antes.
+async function urlBlob(url, tipo, remendo) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('Não consegui baixar o motor de conversão. Verifique sua internet.');
+  const corpo = remendo ? remendo(await resp.text()) : await resp.blob();
+  return URL.createObjectURL(new Blob([corpo], { type: tipo }));
+}
+
+let ffmpegAv = null, ffmpegPromessa = null, aoProgresso = null;
+
+function statusAv(texto) {
+  const s = $('statusAv');
+  s.textContent = texto;
+  s.classList.toggle('oculto', !texto);
+}
+
+async function garantirFfmpeg() {
+  if (ffmpegAv) return ffmpegAv;
+  if (!ffmpegPromessa) {
+    ffmpegPromessa = (async () => {
+      statusAv('Baixando o motor de conversão (~31 MB, só na primeira vez)...');
+      // O ffmpeg.js precisa de um pequeno ajuste para aceitar o Worker via blob
+      const ALVO = 'new URL(e.p+e.u(814),e.b)';
+      const ffmpegUrl = await urlBlob(FF.ffmpegJs, 'text/javascript', (js) => {
+        if (!js.includes(ALVO)) throw new Error('Não consegui preparar a biblioteca de vídeo (versão inesperada).');
+        return js.replace(ALVO, 'r.workerLoadURL');
+      });
+      await import(ffmpegUrl);
+      const ff = new FFmpegWASM.FFmpeg();
+      ff.on('progress', ({ progress }) => {
+        if (aoProgresso) aoProgresso(Math.max(0, Math.min(1, progress)));
+      });
+      ff.on('log', ({ message }) => console.log(message));
+      await ff.load({
+        workerLoadURL: await urlBlob(FF.worker, 'text/javascript'),
+        coreURL: await urlBlob(FF.coreJs, 'text/javascript'),
+        wasmURL: await urlBlob(FF.coreWasm, 'application/wasm')
+      });
+      ffmpegAv = ff;
+      return ff;
+    })().catch((e) => { ffmpegPromessa = null; throw e; });
+  }
+  try { return await ffmpegPromessa; }
+  finally { statusAv(''); }
+}
+
+// ---- Formatos: cada um define o "comando" do ffmpeg ----
+const FORMATOS_AV = {
+  mp3:  { ext: 'mp3',  tipo: 'audio/mpeg', video: false,
+          args: (o) => ['-vn', '-c:a', 'libmp3lame', '-b:a', o.audio + 'k'] },
+  wav:  { ext: 'wav',  tipo: 'audio/wav',  video: false,
+          args: () => ['-vn', '-c:a', 'pcm_s16le'] },
+  ogg:  { ext: 'ogg',  tipo: 'audio/ogg',  video: false,
+          args: (o) => ['-vn', '-c:a', 'libvorbis', '-b:a', o.audio + 'k'] },
+  m4a:  { ext: 'm4a',  tipo: 'audio/mp4',  video: false,
+          args: (o) => ['-vn', '-c:a', 'aac', '-b:a', o.audio + 'k'] },
+  mp4:  { ext: 'mp4',  tipo: 'video/mp4',  video: true,
+          args: (o) => ['-vf', o.filtro, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', o.crf,
+                        '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart'] },
+  webm: { ext: 'webm', tipo: 'video/webm', video: true,
+          args: (o) => ['-vf', o.filtro, '-c:v', 'libvpx', '-b:v', o.vb, '-deadline', 'realtime',
+                        '-cpu-used', '5', '-c:a', 'libvorbis'] },
+  gif:  { ext: 'gif',  tipo: 'image/gif',  video: true,
+          args: () => ['-t', '15', '-vf',
+                       "fps=10,scale='min(480,iw)':-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
+                       '-loop', '0'] }
+};
+
+function opcoesAv() {
+  const q = $('qualVideoAv').value;          // boa | media | leve
+  const altura = $('resolucaoAv').value;     // original | 720 | 480
+  // O tamanho precisa ser par (exigência do formato MP4), por isso o "/2*2"
+  const filtro = altura === 'original'
+    ? 'scale=trunc(iw/2)*2:trunc(ih/2)*2'
+    : "scale=-2:'trunc(min(" + altura + ",ih)/2)*2'";
+  return {
+    audio: $('qualAudioAv').value,
+    crf: { boa: '23', media: '28', leve: '32' }[q],
+    vb: { boa: '2M', media: '1M', leve: '600k' }[q],
+    filtro
+  };
+}
+
+// ---- Estado ----
+let formatoAv = 'mp3';
+let arqAv = [];
+let resAv = [];
+
+function ehAudioOuVideo(f) {
+  return f.type.startsWith('audio/') || f.type.startsWith('video/') ||
+    /\.(mp3|wav|ogg|m4a|aac|flac|opus|wma|mp4|mov|mkv|webm|avi|flv|3gp|wmv|m4v|mpg|mpeg)$/i.test(f.name);
+}
+
+// ---- Escolher arquivos ----
+const dropAv = $('dropAv'), entradaAv = $('entradaAv');
+dropAv.addEventListener('click', () => entradaAv.click());
+dropAv.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') entradaAv.click(); });
+entradaAv.addEventListener('change', () => { adicionarAv(entradaAv.files); entradaAv.value = ''; });
+['dragenter', 'dragover'].forEach(ev =>
+  dropAv.addEventListener(ev, (e) => { e.preventDefault(); dropAv.classList.add('sobre'); }));
+['dragleave', 'drop'].forEach(ev =>
+  dropAv.addEventListener(ev, (e) => { e.preventDefault(); dropAv.classList.remove('sobre'); }));
+dropAv.addEventListener('drop', (e) => adicionarAv(e.dataTransfer.files));
+
+function adicionarAv(novos) {
+  const validos = Array.from(novos).filter(ehAudioOuVideo);
+  if (!validos.length) return;
+  arqAv.push(...validos);
+  desenharListaAv();
+}
+function desenharListaAv() {
+  const ul = $('listaAv');
+  ul.innerHTML = '';
+  arqAv.forEach((f, i) => {
+    const li = document.createElement('li');
+    const nome = document.createElement('span');
+    nome.className = 'nome';
+    nome.textContent = f.name;
+    const direita = document.createElement('span');
+    direita.className = 'tam';
+    direita.append(formatarTamanho(f.size) + ' ');
+    direita.append(criarBotao('✕', 'Remover', 'remover', () => { arqAv.splice(i, 1); desenharListaAv(); }));
+    li.append(nome, direita);
+    ul.appendChild(li);
+  });
+  $('converterAv').disabled = arqAv.length === 0;
+}
+
+// ---- Escolher o formato ----
+function atualizarOpcoesAv() {
+  const fmt = FORMATOS_AV[formatoAv];
+  $('op-av-audio').classList.toggle('oculto', fmt.video || formatoAv === 'wav');
+  $('op-av-video').classList.toggle('oculto', !(formatoAv === 'mp4' || formatoAv === 'webm'));
+  const dica = $('dicaAv');
+  const textos = {
+    wav: 'WAV não tem compressão: o arquivo fica grande, mas com a qualidade original.',
+    gif: 'O GIF usa os primeiros 15 segundos do vídeo, com até 480 pixels de largura.'
+  };
+  dica.textContent = textos[formatoAv] || '';
+  dica.classList.toggle('oculto', !textos[formatoAv]);
+}
+$('formatosAv').addEventListener('click', (e) => {
+  const btn = e.target.closest('.formato');
+  if (!btn) return;
+  document.querySelectorAll('#formatosAv .formato').forEach(b => b.classList.toggle('ativo', b === btn));
+  formatoAv = btn.dataset.fmt;
+  atualizarOpcoesAv();
+});
+
+// ---- Resultados ----
+function limparResultadosAv() {
+  resAv.forEach(r => URL.revokeObjectURL(r.url));
+  resAv = [];
+  $('resultadosAv').innerHTML = '';
+  $('baixarTodosAv').classList.add('oculto');
+}
+function mostrarResultadoAv(blob, nome) {
+  const url = URL.createObjectURL(blob);
+  resAv.push({ url, nome });
+  const linha = document.createElement('div');
+  linha.className = 'res';
+  const info = document.createElement('div');
+  info.className = 'info';
+  const n = document.createElement('span');
+  n.className = 'nome';
+  n.textContent = nome;
+  const t = document.createElement('div');
+  t.textContent = formatarTamanho(blob.size);
+  info.append(n, t);
+  const a = document.createElement('a');
+  a.className = 'btn peq'; a.href = url; a.download = nome; a.textContent = '⬇ Baixar';
+  linha.append(info, a);
+  $('resultadosAv').appendChild(linha);
+  $('baixarTodosAv').classList.toggle('oculto', resAv.length < 2);
+}
+function mostrarErroAv(nomeArquivo, mensagem) {
+  const linha = document.createElement('div');
+  linha.className = 'res';
+  const info = document.createElement('div');
+  info.className = 'info';
+  const n = document.createElement('span');
+  n.className = 'nome';
+  n.textContent = nomeArquivo;
+  const e = document.createElement('div');
+  e.className = 'erro';
+  e.textContent = mensagem;
+  info.append(n, e);
+  linha.append(info);
+  $('resultadosAv').appendChild(linha);
+}
+$('baixarTodosAv').addEventListener('click', () => {
+  resAv.forEach((r, i) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = r.url; a.download = r.nome;
+      document.body.appendChild(a); a.click(); a.remove();
+    }, i * 300);
+  });
+});
+
+// ---- Converter UM arquivo ----
+async function converterAv(arquivo, fmt) {
+  const ff = await garantirFfmpeg();
+  const extEntrada = (arquivo.name.match(/\.[A-Za-z0-9]{1,5}$/) || [''])[0];
+  const entrada = 'entrada' + extEntrada;
+  const saida = 'saida.' + fmt.ext;
+
+  await ff.writeFile(entrada, new Uint8Array(await arquivo.arrayBuffer()));
+  try {
+    const codigo = await ff.exec(['-i', entrada, ...fmt.args(opcoesAv()), saida]);
+    if (codigo !== 0) {
+      throw new Error('Não consegui converter este arquivo. O formato pode não ser suportado' +
+        (fmt.video ? ', ou ele não tem imagem.' : ', ou ele não tem som.'));
+    }
+    const dados = await ff.readFile(saida);
+    mostrarResultadoAv(new Blob([dados], { type: fmt.tipo }), semExtensao(arquivo.name) + '.' + fmt.ext);
+  } finally {
+    // limpa a memória do ffmpeg para o próximo arquivo
+    try { await ff.deleteFile(entrada); } catch (e) { /* ignora */ }
+    try { await ff.deleteFile(saida); } catch (e) { /* ignora */ }
+  }
+}
+
+// ---- Botão principal ----
+$('converterAv').addEventListener('click', async () => {
+  const btn = $('converterAv');
+  btn.disabled = true;
+  limparResultadosAv();
+  const fmt = FORMATOS_AV[formatoAv];
+
+  for (let i = 0; i < arqAv.length; i++) {
+    const arq = arqAv[i];
+    const prefixo = arqAv.length > 1 ? (i + 1) + '/' + arqAv.length + ' · ' : '';
+    try {
+      if (arq.size > 500 * 1024 * 1024) throw new Error('Este arquivo é grande demais (o máximo é 500 MB).');
+      btn.textContent = prefixo + 'Preparando...';
+      aoProgresso = (p) => { btn.textContent = prefixo + 'Convertendo ' + Math.round(p * 100) + '%'; };
+      await converterAv(arq, fmt);
+    } catch (erro) {
+      mostrarErroAv(arq.name, traduzirErro(erro));
+    }
+  }
+
+  aoProgresso = null;
+  btn.textContent = 'Converter';
+  btn.disabled = arqAv.length === 0;
+});
+
+atualizarOpcoesAv();
+</script>
+
+<script>
+/* =========================================================
+   DOCUMENTOS: Word (.docx), texto (.txt), Markdown (.md) e HTML
+   Ideia: qualquer entrada vira HTML -> o HTML vira uma lista de
+   "blocos" (títulos, parágrafos, listas, tabelas...) -> os blocos
+   viram o formato de saída. O .docx de saída é montado à mão
+   (um .docx é um zip com alguns arquivos XML), sem biblioteca.
+   ========================================================= */
+
+// Bibliotecas só para LER: .docx (mammoth), Markdown (marked) e gerar Markdown (turndown)
+const LIBS_DOC = {
+  marked: 'https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js',
+  turndown: 'https://cdn.jsdelivr.net/npm/turndown@7.1.2/dist/turndown.js',
+  mammoth: 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js'
+};
+function garantirLibDoc(nome) { return carregarScript(LIBS_DOC[nome]); }
+
+// ---------- 1. HTML -> blocos ----------
+const TAGS_BLOCO = new Set(['P', 'DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN', 'ASIDE', 'NAV',
+  'FIGURE', 'FIGCAPTION', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'PRE',
+  'TABLE', 'HR', 'DL', 'DT', 'DD', 'ADDRESS']);
+
+// Limpa espaços sobrando nas pontas e entre pedaços de texto
+function limparRuns(runs) {
+  let r = runs.map(x => ({ ...x }));
+  for (let i = 1; i < r.length; i++) {
+    if (r[i - 1].x !== '\n' && r[i - 1].x.endsWith(' ') && r[i].x.startsWith(' ')) r[i].x = r[i].x.slice(1);
+  }
+  r = r.filter(x => x.x !== '');
+  if (r.length && r[0].x !== '\n') r[0].x = r[0].x.replace(/^\s+/, '');
+  if (r.length && r[r.length - 1].x !== '\n') r[r.length - 1].x = r[r.length - 1].x.replace(/\s+$/, '');
+  return r.filter(x => x.x !== '');
+}
+function temTexto(runs) { return runs.some(r => r.x.trim() !== ''); }
+
+// Texto corrido: cada pedaço é { x: texto, b: negrito, i: itálico, u: sublinhado, c: código }
+function inlineDoc(no, fmt, out) {
+  if (no.nodeType === 3) {
+    const t = no.nodeValue.replace(/[\s ]+/g, ' ');
+    if (t) out.push({ x: t, ...fmt });
+    return;
+  }
+  if (no.nodeType !== 1) return;
+  const tag = no.tagName;
+  if (tag === 'BR') { out.push({ x: '\n' }); return; }
+  if (tag === 'IMG') { out.push({ x: '[imagem]', ...fmt }); return; }
+  const f = { ...fmt };
+  if (tag === 'STRONG' || tag === 'B') f.b = true;
+  if (tag === 'EM' || tag === 'I' || tag === 'CITE') f.i = true;
+  if (tag === 'U' || tag === 'INS') f.u = true;
+  if (tag === 'CODE' || tag === 'KBD' || tag === 'SAMP' || tag === 'TT') f.c = true;
+  no.childNodes.forEach(c => inlineDoc(c, f, out));
+  if (tag === 'A') {
+    const h = no.getAttribute('href') || '';
+    if (/^https?:\/\//i.test(h) && no.textContent.trim() !== h) out.push({ x: ' (' + h + ')' });
+  } else if (TAGS_BLOCO.has(tag)) {
+    out.push({ x: ' ' });
+  }
+}
+
+function listaParaBlocos(el, nivel, blocos, ordenada) {
+  let n = parseInt(el.getAttribute('start'), 10) || 1;
+  Array.from(el.children).forEach(li => {
+    if (li.tagName !== 'LI') return;
+    const marca = ordenada ? (n++) + '.' : (nivel % 2 === 0 ? '•' : '◦');
+    let runs = [], primeiro = true;
+    const emitir = () => {
+      const r = limparRuns(runs);
+      runs = [];
+      if (!temTexto(r)) return;
+      if (primeiro) { blocos.push({ t: 'li', runs: r, nivel, marca }); primeiro = false; }
+      else blocos.push({ t: 'p', runs: r, indent: nivel + 1 });
+    };
+    li.childNodes.forEach(filho => {
+      if (filho.nodeType === 1 && (filho.tagName === 'UL' || filho.tagName === 'OL')) {
+        emitir();
+        listaParaBlocos(filho, nivel + 1, blocos, filho.tagName === 'OL');
+      } else if (filho.nodeType === 1 && TAGS_BLOCO.has(filho.tagName)) {
+        emitir(); inlineDoc(filho, {}, runs); emitir();
+      } else {
+        inlineDoc(filho, {}, runs);
+      }
+    });
+    emitir();
+  });
+}
+
+function tabelaParaBloco(el) {
+  const linhas = [];
+  el.querySelectorAll('tr').forEach(tr => {
+    if (tr.closest('table') !== el) return;      // ignora tabelas dentro de tabelas
+    const celulas = [];
+    Array.from(tr.children).forEach(td => {
+      if (td.tagName !== 'TD' && td.tagName !== 'TH') return;
+      const runs = [];
+      inlineDoc(td, td.tagName === 'TH' ? { b: true } : {}, runs);
+      celulas.push(limparRuns(runs));
+    });
+    if (celulas.length) linhas.push(celulas);
+  });
+  return { t: 'tabela', linhas };
+}
+
+function caminharDoc(pai, ctx, blocos) {
+  let pend = [];
+  const esvaziar = () => {
+    const r = limparRuns(pend);
+    pend = [];
+    if (temTexto(r)) blocos.push({ t: 'p', runs: r, quote: ctx.quote });
+  };
+  pai.childNodes.forEach(no => {
+    if (no.nodeType === 3) { inlineDoc(no, {}, pend); return; }
+    if (no.nodeType !== 1) return;
+    const tag = no.tagName;
+    if (!TAGS_BLOCO.has(tag)) { inlineDoc(no, {}, pend); return; }
+    esvaziar();
+    if (/^H[1-6]$/.test(tag)) {
+      const r = []; inlineDoc(no, {}, r);
+      const l = limparRuns(r);
+      if (temTexto(l)) blocos.push({ t: 'h', n: Number(tag[1]), runs: l });
+    } else if (tag === 'P' || tag === 'DT' || tag === 'DD' || tag === 'ADDRESS' || tag === 'FIGCAPTION') {
+      const r = []; inlineDoc(no, {}, r);
+      const l = limparRuns(r);
+      if (temTexto(l)) blocos.push({ t: 'p', runs: l, quote: ctx.quote });
+    } else if (tag === 'UL' || tag === 'OL') {
+      listaParaBlocos(no, 0, blocos, tag === 'OL');
+    } else if (tag === 'PRE') {
+      blocos.push({ t: 'code', linhas: no.textContent.replace(/\n$/, '').split('\n') });
+    } else if (tag === 'TABLE') {
+      const t = tabelaParaBloco(no);
+      if (t.linhas.length) blocos.push(t);
+    } else if (tag === 'HR') {
+      blocos.push({ t: 'hr' });
+    } else {
+      caminharDoc(no, tag === 'BLOCKQUOTE' ? { ...ctx, quote: true } : ctx, blocos);
+    }
+  });
+  esvaziar();
+}
+
+function htmlParaBlocos(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('script,style,noscript,template').forEach(n => n.remove());
+  const blocos = [];
+  caminharDoc(doc.body, { quote: false }, blocos);
+  return blocos;
+}
+
+// ---------- 2. blocos -> texto puro ----------
+function blocosParaTexto(blocos) {
+  const linhas = [];
+  const txt = (runs) => runs.map(r => r.x).join('');
+  let anterior = null;
+  blocos.forEach(b => {
+    if (anterior && !(b.t === 'li' && anterior.t === 'li')) linhas.push('');
+    if (b.t === 'h') linhas.push(txt(b.runs));
+    else if (b.t === 'p') linhas.push('  '.repeat(b.indent || 0) + (b.quote ? '> ' : '') + txt(b.runs));
+    else if (b.t === 'li') linhas.push('  '.repeat(b.nivel) + b.marca + ' ' + txt(b.runs));
+    else if (b.t === 'code') b.linhas.forEach(l => linhas.push('    ' + l));
+    else if (b.t === 'hr') linhas.push('----------');
+    else if (b.t === 'tabela') b.linhas.forEach(l => linhas.push(l.map(txt).join(' | ')));
+    anterior = b;
+  });
+  return linhas.join('\n').trim() + '\n';
+}
+
+// ---------- 3. blocos -> .docx ----------
+function escXml(s) {
+  return s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g, '')
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function xmlRuns(runs, extra) {
+  extra = extra || {};
+  return runs.map(r => {
+    if (r.x === '\n') return '<w:r><w:br/></w:r>';
+    let p = '';
+    if (r.c || extra.c) p += '<w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New"/>';
+    if (r.b || extra.b) p += '<w:b/>';
+    if (r.i || extra.i) p += '<w:i/>';
+    if (r.u) p += '<w:u w:val="single"/>';
+    return '<w:r>' + (p ? '<w:rPr>' + p + '</w:rPr>' : '') +
+           '<w:t xml:space="preserve">' + escXml(r.x) + '</w:t></w:r>';
+  }).join('');
+}
+function xmlPar(conteudo, o) {
+  o = o || {};
+  let ppr = '';
+  if (o.estilo) ppr += '<w:pStyle w:val="' + o.estilo + '"/>';
+  if (o.borda) ppr += '<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="999999"/></w:pBdr>';
+  if (o.fundo) ppr += '<w:shd w:val="clear" w:color="auto" w:fill="F2F2F2"/>';
+  if (o.depois !== undefined) ppr += '<w:spacing w:after="' + o.depois + '"/>';
+  if (o.esq) ppr += '<w:ind w:left="' + o.esq + (o.suspenso ? '" w:hanging="' + o.suspenso : '') + '"/>';
+  return '<w:p>' + (ppr ? '<w:pPr>' + ppr + '</w:pPr>' : '') + conteudo + '</w:p>';
+}
+function xmlTabela(linhas) {
+  const cols = Math.max(...linhas.map(l => l.length));
+  const larg = Math.floor(9000 / cols);
+  const borda = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']
+    .map(l => '<w:' + l + ' w:val="single" w:sz="4" w:space="0" w:color="999999"/>').join('');
+  let xml = '<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders>' + borda + '</w:tblBorders></w:tblPr><w:tblGrid>' +
+            ('<w:gridCol w:w="' + larg + '"/>').repeat(cols) + '</w:tblGrid>';
+  linhas.forEach(l => {
+    xml += '<w:tr>';
+    for (let c = 0; c < cols; c++) {
+      xml += '<w:tc><w:tcPr><w:tcW w:w="' + larg + '" w:type="dxa"/></w:tcPr>' +
+             xmlPar(xmlRuns(l[c] || []), { depois: 60 }) + '</w:tc>';
+    }
+    xml += '</w:tr>';
+  });
+  return xml + '</w:tbl><w:p/>';
+}
+function blocosParaXml(blocos) {
+  let xml = '';
+  blocos.forEach(b => {
+    if (b.t === 'h') {
+      xml += xmlPar(xmlRuns(b.runs), { estilo: 'Heading' + Math.min(b.n, 6) });
+    } else if (b.t === 'p') {
+      xml += xmlPar(xmlRuns(b.runs, b.quote ? { i: true } : {}),
+                    { esq: ((b.indent || 0) + (b.quote ? 1 : 0)) * 720 });
+    } else if (b.t === 'li') {
+      xml += xmlPar('<w:r><w:t>' + escXml(b.marca) + '</w:t></w:r><w:r><w:tab/></w:r>' + xmlRuns(b.runs),
+                    { depois: 60, esq: 720 * (b.nivel + 1), suspenso: 360 });
+    } else if (b.t === 'code') {
+      b.linhas.forEach(l => {
+        xml += xmlPar(xmlRuns([{ x: l.replace(/\t/g, '    '), c: true }]), { fundo: true, depois: 0 });
+      });
+      xml += '<w:p/>';
+    } else if (b.t === 'hr') {
+      xml += xmlPar('', { borda: true });
+    } else if (b.t === 'tabela') {
+      xml += xmlTabela(b.linhas);
+    }
+  });
+  return xml;
+}
+
+const XML_CAB = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+const NS_W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+function xmlEstilos() {
+  const tam = { 1: 40, 2: 32, 3: 28, 4: 24, 5: 22, 6: 22 };
+  let est = '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>';
+  for (let n = 1; n <= 6; n++) {
+    est += '<w:style w:type="paragraph" w:styleId="Heading' + n + '"><w:name w:val="heading ' + n + '"/>' +
+      '<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:uiPriority w:val="9"/><w:qFormat/>' +
+      '<w:pPr><w:keepNext/><w:spacing w:before="' + (n === 1 ? 360 : 240) + '" w:after="80"/><w:outlineLvl w:val="' + (n - 1) + '"/></w:pPr>' +
+      '<w:rPr><w:b/>' + (n === 6 ? '<w:i/>' : '') + '<w:sz w:val="' + tam[n] + '"/><w:szCs w:val="' + tam[n] + '"/></w:rPr></w:style>';
+  }
+  return XML_CAB + '<w:styles ' + NS_W + '><w:docDefaults><w:rPrDefault><w:rPr>' +
+    '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/>' +
+    '<w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="pt-BR"/></w:rPr></w:rPrDefault>' +
+    '<w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
+    est + '</w:styles>';
+}
+
+// Zip "sem compressão" escrito à mão (o Word aceita normalmente)
+const TABELA_CRC = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = TABELA_CRC[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function criarZip(arquivos) {
+  const enc = new TextEncoder();
+  const partes = [], central = [];
+  let pos = 0;
+  arquivos.forEach(a => {
+    const nome = enc.encode(a.nome);
+    const dados = enc.encode(a.conteudo);
+    const crc = crc32(dados);
+    const local = new DataView(new ArrayBuffer(30));
+    local.setUint32(0, 0x04034b50, true); local.setUint16(4, 20, true); local.setUint16(6, 0x0800, true);
+    local.setUint16(8, 0, true); local.setUint16(10, 0, true); local.setUint16(12, 33, true);
+    local.setUint32(14, crc, true); local.setUint32(18, dados.length, true); local.setUint32(22, dados.length, true);
+    local.setUint16(26, nome.length, true); local.setUint16(28, 0, true);
+    const cab = new DataView(new ArrayBuffer(46));
+    cab.setUint32(0, 0x02014b50, true); cab.setUint16(4, 20, true); cab.setUint16(6, 20, true);
+    cab.setUint16(8, 0x0800, true); cab.setUint16(10, 0, true); cab.setUint16(12, 0, true); cab.setUint16(14, 33, true);
+    cab.setUint32(16, crc, true); cab.setUint32(20, dados.length, true); cab.setUint32(24, dados.length, true);
+    cab.setUint16(28, nome.length, true); cab.setUint32(42, pos, true);
+    partes.push(new Uint8Array(local.buffer), nome, dados);
+    central.push(new Uint8Array(cab.buffer), nome);
+    pos += 30 + nome.length + dados.length;
+  });
+  const tamCentral = central.reduce((s, p) => s + p.length, 0);
+  const fim = new DataView(new ArrayBuffer(22));
+  fim.setUint32(0, 0x06054b50, true);
+  fim.setUint16(8, arquivos.length, true); fim.setUint16(10, arquivos.length, true);
+  fim.setUint32(12, tamCentral, true); fim.setUint32(16, pos, true);
+  return new Blob([...partes, ...central, new Uint8Array(fim.buffer)]);
+}
+function htmlParaDocx(html) {
+  const corpo = blocosParaXml(htmlParaBlocos(html)) || '<w:p/>';
+  const documento = XML_CAB + '<w:document ' + NS_W + '><w:body>' + corpo +
+    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>';
+  return criarZip([
+    { nome: '[Content_Types].xml', conteudo: XML_CAB + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>' },
+    { nome: '_rels/.rels', conteudo: XML_CAB + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
+    { nome: 'word/_rels/document.xml.rels', conteudo: XML_CAB + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+    { nome: 'word/document.xml', conteudo: documento },
+    { nome: 'word/styles.xml', conteudo: xmlEstilos() }
+  ]);
+}
+
+// ---------- 4. Ler os arquivos de entrada ----------
+function tipoDoc(f) {
+  const m = f.name.toLowerCase().match(/\.([a-z0-9]+)$/);
+  const e = m ? m[1] : '';
+  if (e === 'docx') return 'docx';
+  if (e === 'md' || e === 'markdown') return 'md';
+  if (e === 'html' || e === 'htm') return 'html';
+  if (e === 'txt' || f.type === 'text/plain') return 'txt';
+  return null;
+}
+async function lerTexto(arquivo) {
+  const buf = await arquivo.arrayBuffer();
+  let t = new TextDecoder('utf-8').decode(buf);
+  // Arquivos antigos do Windows costumam estar em outra codificação
+  if (t.includes('�')) t = new TextDecoder('windows-1252').decode(buf);
+  return t;
+}
+function textoParaHtml(texto) {
+  return texto.replace(/\r\n?/g, '\n').split(/\n{2,}/)
+    .filter(p => p.trim())
+    .map(p => '<p>' + textoSeguro(p.trim()).replace(/\n/g, '<br>') + '</p>').join('\n');
+}
+async function lerComoHtml(arquivo, tipo, destino) {
+  if (tipo === 'docx') {
+    await garantirLibDoc('mammoth');
+    const opcoes = { arrayBuffer: await arquivo.arrayBuffer() };
+    // Só o HTML de saída guarda as imagens; nos outros formatos elas só pesariam
+    if (destino !== 'html') opcoes.convertImage = mammoth.images.imgElement(() => Promise.resolve({ src: '' }));
+    return (await mammoth.convertToHtml(opcoes)).value;
+  }
+  const texto = await lerTexto(arquivo);
+  if (tipo === 'html') return texto;
+  if (tipo === 'md') { await garantirLibDoc('marked'); return marked.parse(texto); }
+  return textoParaHtml(texto);
+}
+function envolverHtml(corpo, titulo) {
+  return '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="UTF-8">\n' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>' + textoSeguro(titulo) + '</title>\n' +
+    '<style>body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 16px;line-height:1.6}' +
+    'table{border-collapse:collapse}td,th{border:1px solid #bbb;padding:6px 10px}pre{background:#f4f4f4;padding:12px;overflow:auto}</style>\n' +
+    '</head>\n<body>\n' + corpo + '\n</body>\n</html>\n';
+}
+async function htmlParaMarkdown(html) {
+  await garantirLibDoc('turndown');
+  const td = new TurndownService({ headingStyle: 'atx', bulletListMarker: '-', codeBlockStyle: 'fenced' });
+  td.remove(['script', 'style']);
+  td.addRule('imagem-vazia', { filter: (n) => n.nodeName === 'IMG' && !n.getAttribute('src'), replacement: () => '' });
+  td.addRule('tabela', {
+    filter: 'table',
+    replacement: (conteudo, no) => {
+      const linhas = Array.from(no.querySelectorAll('tr')).map(tr =>
+        Array.from(tr.children).map(c => c.textContent.replace(/\s+/g, ' ').replace(/\|/g, '\\|').trim()));
+      if (!linhas.length) return '';
+      const cols = Math.max(...linhas.map(l => l.length));
+      const fmt = (l) => { while (l.length < cols) l.push(''); return '| ' + l.join(' | ') + ' |'; };
+      return '\n\n' + [fmt(linhas[0]), '| ' + Array(cols).fill('---').join(' | ') + ' |', ...linhas.slice(1).map(fmt)].join('\n') + '\n\n';
+    }
+  });
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return td.turndown(doc.body).trim() + '\n';
+}
+
+// ---------- 5. Converter um arquivo ----------
+const TIPOS_DOC = {
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  txt: 'text/plain;charset=utf-8', md: 'text/markdown;charset=utf-8', html: 'text/html;charset=utf-8'
+};
+async function converterUmDoc(arquivo, destino) {
+  const tipo = tipoDoc(arquivo);
+  const base = semExtensao(arquivo.name);
+  let conteudo;
+  if (destino === tipo && tipo !== 'docx') {
+    conteudo = await lerTexto(arquivo);                                    // mesmo formato: só copia
+  } else if (destino === 'txt') {
+    conteudo = tipo === 'md' || tipo === 'html' || tipo === 'docx'
+      ? blocosParaTexto(htmlParaBlocos(await lerComoHtml(arquivo, tipo, destino)))
+      : await lerTexto(arquivo);
+  } else if (destino === 'md') {
+    conteudo = tipo === 'txt' ? await lerTexto(arquivo) : await htmlParaMarkdown(await lerComoHtml(arquivo, tipo, destino));
+  } else if (destino === 'html') {
+    conteudo = envolverHtml(await lerComoHtml(arquivo, tipo, destino), base);
+  } else {
+    conteudo = htmlParaDocx(await lerComoHtml(arquivo, tipo, destino));    // docx
+  }
+  const blob = destino === 'docx' ? new Blob([conteudo], { type: TIPOS_DOC.docx }) : new Blob([conteudo], { type: TIPOS_DOC[destino] });
+  return { blob, nome: base + '.' + destino };
+}
+
+// ---------- 6. Tela ----------
+let formatoDoc = 'docx', arqDoc = [], resDoc = [];
+
+const dropDoc = $('dropDoc'), entradaDoc = $('entradaDoc');
+dropDoc.addEventListener('click', () => entradaDoc.click());
+dropDoc.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') entradaDoc.click(); });
+entradaDoc.addEventListener('change', () => { adicionarDoc(entradaDoc.files); entradaDoc.value = ''; });
+['dragenter', 'dragover'].forEach(ev =>
+  dropDoc.addEventListener(ev, (e) => { e.preventDefault(); dropDoc.classList.add('sobre'); }));
+['dragleave', 'drop'].forEach(ev =>
+  dropDoc.addEventListener(ev, (e) => { e.preventDefault(); dropDoc.classList.remove('sobre'); }));
+dropDoc.addEventListener('drop', (e) => adicionarDoc(e.dataTransfer.files));
+
+function adicionarDoc(novos) {
+  const aviso = $('avisoDoc');
+  aviso.classList.add('oculto');
+  const todos = Array.from(novos);
+  const validos = todos.filter(f => tipoDoc(f));
+  if (todos.some(f => /\.doc$/i.test(f.name))) {
+    aviso.textContent = 'Arquivos .doc (Word antigo) não são suportados. Abra no Word e use "Salvar como" .docx.';
+    aviso.classList.remove('oculto');
+  }
+  arqDoc.push(...validos);
+  desenharListaDoc();
+}
+function desenharListaDoc() {
+  const ul = $('listaDoc');
+  ul.innerHTML = '';
+  arqDoc.forEach((f, i) => {
+    const li = document.createElement('li');
+    const nome = document.createElement('span');
+    nome.className = 'nome';
+    nome.textContent = f.name;
+    const direita = document.createElement('span');
+    direita.className = 'tam';
+    direita.append(formatarTamanho(f.size) + ' ');
+    direita.append(criarBotao('✕', 'Remover', 'remover', () => { arqDoc.splice(i, 1); desenharListaDoc(); }));
+    li.append(nome, direita);
+    ul.appendChild(li);
+  });
+  $('converterDoc').disabled = arqDoc.length === 0;
+}
+$('formatosDoc').addEventListener('click', (e) => {
+  const btn = e.target.closest('.formato');
+  if (!btn) return;
+  document.querySelectorAll('#formatosDoc .formato').forEach(b => b.classList.toggle('ativo', b === btn));
+  formatoDoc = btn.dataset.fmt;
+});
+
+function limparResultadosDoc() {
+  resDoc.forEach(r => URL.revokeObjectURL(r.url));
+  resDoc = [];
+  $('resultadosDoc').innerHTML = '';
+  $('baixarTodosDoc').classList.add('oculto');
+}
+function linhaDoc(nomeArquivo, detalhe, ehErro, url) {
+  const linha = document.createElement('div');
+  linha.className = 'res';
+  const info = document.createElement('div');
+  info.className = 'info';
+  const n = document.createElement('span');
+  n.className = 'nome';
+  n.textContent = nomeArquivo;
+  const d = document.createElement('div');
+  if (ehErro) d.className = 'erro';
+  d.textContent = detalhe;
+  info.append(n, d);
+  linha.append(info);
+  if (url) {
+    const a = document.createElement('a');
+    a.className = 'btn peq'; a.href = url; a.download = nomeArquivo; a.textContent = '⬇ Baixar';
+    linha.append(a);
+  }
+  $('resultadosDoc').appendChild(linha);
+}
+$('baixarTodosDoc').addEventListener('click', () => {
+  resDoc.forEach((r, i) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = r.url; a.download = r.nome;
+      document.body.appendChild(a); a.click(); a.remove();
+    }, i * 300);
+  });
+});
+
+$('converterDoc').addEventListener('click', async () => {
+  const btn = $('converterDoc');
+  btn.disabled = true;
+  limparResultadosDoc();
+  for (let i = 0; i < arqDoc.length; i++) {
+    const arq = arqDoc[i];
+    btn.textContent = arqDoc.length > 1 ? 'Convertendo ' + (i + 1) + '/' + arqDoc.length + '...' : 'Convertendo...';
+    try {
+      if (arq.size > 50 * 1024 * 1024) throw new Error('Este arquivo é grande demais (o máximo é 50 MB).');
+      const { blob, nome } = await converterUmDoc(arq, formatoDoc);
+      const url = URL.createObjectURL(blob);
+      resDoc.push({ url, nome });
+      linhaDoc(nome, formatarTamanho(arq.size) + ' → ' + formatarTamanho(blob.size), false, url);
+    } catch (erro) {
+      const msg = (erro && erro.message) || String(erro);
+      linhaDoc(arq.name, /mammoth|marked|turndown|biblioteca/i.test(msg) ? msg : 'Não consegui converter este arquivo. ' + msg, true);
+    }
+  }
+  $('baixarTodosDoc').classList.toggle('oculto', resDoc.length < 2);
+  btn.textContent = 'Converter';
+  btn.disabled = arqDoc.length === 0;
+});
+</script>
+</body>
+</html>
